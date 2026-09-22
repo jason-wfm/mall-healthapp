@@ -1,10 +1,13 @@
 import React from 'react';
 import { HealthProfile, HealthOrder } from '../../types/health';
-import { ChevronRight, CreditCard, Clock, Truck, ShieldCheck, Settings, Users, FileText, Activity, Gift, Smartphone, HelpCircle } from 'lucide-react';
+import { ChevronRight, CreditCard, Clock, Truck, ShieldCheck, Settings, Users, FileText, Activity, Gift, Smartphone, HelpCircle, LogOut, LogIn, User } from 'lucide-react';
 
 interface Props {
   profile: HealthProfile;
   orders: HealthOrder[];
+  isLoggedIn?: boolean;
+  onOpenLogin?: () => void;
+  onLogout?: () => void;
   onOpenOrder: (order: HealthOrder) => void;
   onOpenFamilyCircle: () => void;
   onOpenConstitution: () => void;
@@ -15,6 +18,9 @@ interface Props {
 export const MineTab: React.FC<Props> = ({
   profile,
   orders,
+  isLoggedIn = true,
+  onOpenLogin,
+  onLogout,
   onOpenOrder,
   onOpenFamilyCircle,
   onOpenConstitution,
@@ -23,51 +29,80 @@ export const MineTab: React.FC<Props> = ({
 }) => {
   return (
     <div className="pb-24 space-y-3 bg-slate-50/70 min-h-screen text-slate-800">
-      {/* 顶部个人卡片 */}
+      {/* 顶部个人卡片 (已登录 vs 未登录) */}
       <div className="bg-gradient-to-r from-teal-700 via-teal-800 to-slate-900 text-white pt-6 pb-5 px-4 rounded-b-3xl shadow-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-teal-600 border-2 border-white flex items-center justify-center text-2xl shadow-md">
-              👨‍💼
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h2 className="font-extrabold text-base">{profile.name}</h2>
-                <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.2 rounded-full">
-                  VIP 黄金会员
-                </span>
+        {isLoggedIn ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-teal-600 border-2 border-white flex items-center justify-center text-2xl shadow-md">
+                👨‍💼
               </div>
-              <p className="text-[10px] text-teal-100 mt-0.5">
-                手机号 138****0001 · 幸福之家主理人
-              </p>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h2 className="font-extrabold text-base">{profile.name}</h2>
+                  <span className="bg-amber-400 text-amber-950 font-black text-[9px] px-1.5 py-0.2 rounded-full">
+                    VIP 黄金会员
+                  </span>
+                </div>
+                <p className="text-[10px] text-teal-100 mt-0.5">
+                  手机号 138****0001 · 幸福之家主理人
+                </p>
+              </div>
             </div>
-          </div>
 
-          <button
-            onClick={onOpenHealthHub}
-            className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl backdrop-blur-xs border border-white/20 flex items-center gap-0.5"
-          >
-            <span>档案 85分</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
+            <button
+              onClick={onOpenHealthHub}
+              className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl backdrop-blur-xs border border-white/20 flex items-center gap-0.5"
+            >
+              <span>档案 85分</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-white text-2xl shadow-inner">
+                <User className="w-7 h-7 text-white/80" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h2 className="font-extrabold text-base">未登录账号</h2>
+                  <span className="bg-white/20 text-white font-bold text-[9px] px-1.5 py-0.2 rounded-full">
+                    访客模式
+                  </span>
+                </div>
+                <p className="text-[10px] text-teal-100 mt-0.5">
+                  点击登录享受健康档案、上门医护与亲情服务
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onOpenLogin}
+              className="bg-amber-400 hover:bg-amber-300 text-amber-950 text-xs font-extrabold px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1 active:scale-95 transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>立即登录</span>
+            </button>
+          </div>
+        )}
 
         {/* 资产四宫格 */}
         <div className="grid grid-cols-4 gap-2 text-center text-white mt-5 pt-3 border-t border-white/10 text-xs">
           <div>
-            <span className="font-black text-sm block font-mono">1,280</span>
+            <span className="font-black text-sm block font-mono">{isLoggedIn ? '1,280' : '--'}</span>
             <span className="text-[10px] text-teal-100">健康豆</span>
           </div>
           <div>
-            <span className="font-black text-sm block font-mono">3</span>
+            <span className="font-black text-sm block font-mono">{isLoggedIn ? '3' : '--'}</span>
             <span className="text-[10px] text-teal-100">优惠券</span>
           </div>
           <div>
-            <span className="font-black text-sm block font-mono">2</span>
+            <span className="font-black text-sm block font-mono">{isLoggedIn ? '2' : '--'}</span>
             <span className="text-[10px] text-teal-100">体检报告</span>
           </div>
           <div>
-            <span className="font-black text-sm block font-mono">1</span>
+            <span className="font-black text-sm block font-mono">{isLoggedIn ? '1' : '--'}</span>
             <span className="text-[10px] text-teal-100">智能设备</span>
           </div>
         </div>
@@ -236,6 +271,20 @@ export const MineTab: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
+      {/* 退出登录操作按钮 (用于验证未登录拦截) */}
+      {isLoggedIn && (
+        <div className="px-3 pt-2">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="w-full bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-rose-600 font-bold text-xs py-2.5 rounded-2xl flex items-center justify-center gap-1.5 shadow-2xs active:scale-98 transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>退出当前账号 (切换至未登录模式测试)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

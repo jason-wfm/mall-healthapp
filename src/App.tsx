@@ -44,7 +44,22 @@ import { CheckoutModal } from './components/mall/CheckoutModal';
 import { PaymentModal } from './components/mall/PaymentModal';
 import { OrderDetailModal } from './components/order/OrderDetailModal';
 
+// User Login & Interceptor
+import { LoginPage, UserAccountInfo } from './components/auth/LoginPage';
+import { CheckCircle2, Sparkles, LogIn } from 'lucide-react';
+
 export default function App() {
+  // Tab Name Mapping
+  const TAB_NAMES: Record<HealthTabType, string> = {
+    home: '商城首页',
+    healthHub: '健康中枢与档案',
+    health: '健康档案',
+    mall: '健康商城',
+    services: '医护服务',
+    discover: '健康发现',
+    mine: '个人中心'
+  };
+
   // Adaptation Environment
   const [currentDevice, setCurrentDevice] = useState<DeviceConfig>(DEVICE_PRESETS[0]);
   const [isLandscape, setIsLandscape] = useState(false);
@@ -58,10 +73,68 @@ export default function App() {
   );
   const [isLocationOutOfRange, setIsLocationOutOfRange] = useState<boolean>(false);
 
+  // User Authentication & Interceptor State (默认为未登录，用于直接展示拦截与登录返回)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
+  const [loginNotice, setLoginNotice] = useState<string>('');
+  const [authToast, setAuthToast] = useState<string | null>(null);
+  const [pendingRedirect, setPendingRedirect] = useState<{
+    description: string;
+    action: () => void;
+  } | null>(null);
+
   // Business state
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [cartItems, setCartItems] = useState<HealthCartItem[]>(INITIAL_CART);
   const [orders, setOrders] = useState<HealthOrder[]>(MOCK_ORDERS);
+
+  // Require Auth Guard (未登录拦截并记录回跳目标)
+  const requireAuth = (action: () => void, targetDescription: string) => {
+    if (!isLoggedIn) {
+      setPendingRedirect({
+        description: targetDescription,
+        action
+      });
+      setLoginNotice(`您正在访问「${targetDescription}」，当前账号未登录，请先登录通行证`);
+      setIsLoginOpen(true);
+      return;
+    }
+    action();
+  };
+
+  // 登录成功处理与自动回跳
+  const handleLoginSuccess = (user: UserAccountInfo) => {
+    setIsLoggedIn(true);
+    setIsLoginOpen(false);
+    setProfile((prev) => ({
+      ...prev,
+      name: user.name
+    }));
+
+    const apiTag = user.apiSource ? `[${user.apiSource}] ` : '';
+    const methodText = user.loginMethod === 'wechat' ? '微信授权鉴权成功' : '登录成功';
+    if (pendingRedirect) {
+      const { action, description } = pendingRedirect;
+      setPendingRedirect(null);
+      setLoginNotice('');
+      setTimeout(() => {
+        action();
+        setAuthToast(`${apiTag}${methodText}！已为您自动跳转回「${description}」`);
+        setTimeout(() => setAuthToast(null), 3800);
+      }, 250);
+    } else {
+      setAuthToast(`${apiTag}${methodText}！欢迎回来，${user.name}`);
+      setTimeout(() => setAuthToast(null), 3500);
+    }
+  };
+
+  // 退出登录
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setActiveTab('home');
+    setAuthToast('已退出登录，已切换至【未登录】模式，点击任意卡片/超链将拦截跳转至登录页');
+    setTimeout(() => setAuthToast(null), 4000);
+  };
 
   // Modals visibility
   const [isPortalOpen, setIsPortalOpen] = useState(false);
@@ -238,6 +311,15 @@ export default function App() {
         showRpxInspector={false}
         onToggleRpxInspector={() => {}}
         onOpenDoc={() => {}}
+        isLoggedIn={isLoggedIn}
+        onToggleAuth={() => {
+          if (isLoggedIn) {
+            handleLogout();
+          } else {
+            setLoginNotice('顶栏快速体验登录');
+            setIsLoginOpen(true);
+          }
+        }}
       />
 
       {/* 模拟器舞台区域 */}
@@ -249,35 +331,125 @@ export default function App() {
           navTitle="康养商城 · 750rpx"
         >
           <div className="relative h-full w-full flex flex-col bg-slate-50 overflow-hidden">
-            {/* 主内容区域 */}
-            <div className="flex-1 overflow-y-auto no-scrollbar relative">
+            {/* 顶层成功提示浮层 */}
+            {authToast && (
+              <div className="absolute top-2.5 left-2.5 right-2.5 z-40 bg-teal-950/95 backdrop-blur-md text-white px-3 py-2 rounded-xl text-xs flex items-center gap-2 shadow-lg border border-teal-500/30 animate-in fade-in slide-in-from-top-2 duration-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-bold flex-1 text-[11px] leading-tight">{authToast}</span>
+              </div>
+            )}
+
+            {/* 未登录演示状态提示条 (可直接点击体验) */}
+            {!isLoggedIn && (
+              <div className="bg-amber-500/15 border-b border-amber-500/30 px-3 py-1.5 flex items-center justify-between text-[11px] text-amber-900 shrink-0 z-30">
+                <span className="flex items-center gap-1 font-bold truncate">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-ping" />
+                  <span>当前状态：未登录访客 (点击任意卡片/超链拦截跳转)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginNotice('点击顶栏主动登录');
+                    setIsLoginOpen(true);
+                  }}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] px-2 py-0.5 rounded-md transition-colors shrink-0 ml-1 shadow-2xs cursor-pointer"
+                >
+                  去登录
+                </button>
+              </div>
+            )}
+
+            {/* 主内容区域 (支持全局捕获未处理的超链与点击) */}
+            <div
+              className="flex-1 overflow-y-auto no-scrollbar relative"
+              onClickCapture={(e) => {
+                if (isLoggedIn) return;
+                const target = e.target as HTMLElement;
+                const anchor = target.closest('a');
+                if (anchor) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const linkTitle =
+                    anchor.innerText?.trim() || anchor.getAttribute('title') || '页面超链接';
+                  requireAuth(() => {
+                    console.log('Navigated to link:', anchor.href);
+                  }, `超链: ${linkTitle}`);
+                }
+              }}
+            >
               {activeTab === 'home' && (
                 <HomeTab
                   currentPortal={currentPortal}
                   currentLocation={currentLocation}
                   isLocationOutOfRange={isLocationOutOfRange}
                   profile={profile}
-                  onOpenPortalSelector={() => setIsPortalOpen(true)}
-                  onOpenLocationSelector={() => setIsLocationOpen(true)}
-                  onOpenConstitution={() => setIsConstitutionOpen(true)}
-                  onOpenFaceDiagnostic={() => setIsFaceDiagnosticOpen(true)}
-                  onOpenTongueDiagnostic={() => setIsTongueDiagnosticOpen(true)}
-                  onOpenMedicalReport={() => setIsMedicalReportOpen(true)}
-                  onOpenFamilyCircle={() => setIsFamilyCircleOpen(true)}
-                  onSelectProduct={(p: HealthProduct) => setSelectedProduct(p)}
-                  onSwitchTab={(t: HealthTabType) => setActiveTab(t)}
-                  onOpenSearch={() => setIsSearchOpen(true)}
+                  onOpenPortalSelector={() =>
+                    requireAuth(() => setIsPortalOpen(true), '区域门户切换')
+                  }
+                  onOpenLocationSelector={() =>
+                    requireAuth(() => setIsLocationOpen(true), 'LBS定位服务')
+                  }
+                  onOpenConstitution={() =>
+                    requireAuth(() => setIsConstitutionOpen(true), '中医九大体质辨识')
+                  }
+                  onOpenFaceDiagnostic={() =>
+                    requireAuth(() => setIsFaceDiagnosticOpen(true), 'AI 观气色面诊')
+                  }
+                  onOpenTongueDiagnostic={() =>
+                    requireAuth(() => setIsTongueDiagnosticOpen(true), 'AI 舌象辨识')
+                  }
+                  onOpenMedicalReport={() =>
+                    requireAuth(() => setIsMedicalReportOpen(true), '体检报告 AI 深度解读')
+                  }
+                  onOpenFamilyCircle={() =>
+                    requireAuth(() => setIsFamilyCircleOpen(true), '家庭健康圈空间')
+                  }
+                  onSelectProduct={(p: HealthProduct) =>
+                    requireAuth(() => setSelectedProduct(p), `商品详情: ${p.title}`)
+                  }
+                  onSwitchTab={(t: HealthTabType) =>
+                    requireAuth(() => setActiveTab(t), TAB_NAMES[t])
+                  }
+                  onOpenSearch={() => requireAuth(() => setIsSearchOpen(true), '全域搜索')}
+                  onOpenHealthProfile={() =>
+                    requireAuth(() => setActiveTab('healthHub'), '健康档案中枢')
+                  }
+                  onOpenRecruit={() =>
+                    requireAuth(
+                      () => alert('已进入平台服务商招募通道，审核通过即可接单获得返现！'),
+                      '平台入驻招募'
+                    )
+                  }
+                  onOpenArticle={(art) =>
+                    requireAuth(
+                      () =>
+                        alert(
+                          `打开健康资讯：《${art.title}》\n已为您匹配慢病关怀与体质调理方案`
+                        ),
+                      `健康资讯: ${art.title}`
+                    )
+                  }
                 />
               )}
 
               {activeTab === 'healthHub' && (
                 <HealthHubTab
                   profile={profile}
-                  onOpenConstitution={() => setIsConstitutionOpen(true)}
-                  onOpenMetricsEntry={() => setIsMetricsEntryOpen(true)}
-                  onOpenMedicalReport={() => setIsMedicalReportOpen(true)}
-                  onOpenFamilyCircle={() => setIsFamilyCircleOpen(true)}
-                  onOpenFaceDiagnostic={() => setIsFaceDiagnosticOpen(true)}
+                  onOpenConstitution={() =>
+                    requireAuth(() => setIsConstitutionOpen(true), '中医九大体质辨识')
+                  }
+                  onOpenMetricsEntry={() =>
+                    requireAuth(() => setIsMetricsEntryOpen(true), '健康指标手动录入')
+                  }
+                  onOpenMedicalReport={() =>
+                    requireAuth(() => setIsMedicalReportOpen(true), '体检报告 AI 解读')
+                  }
+                  onOpenFamilyCircle={() =>
+                    requireAuth(() => setIsFamilyCircleOpen(true), '家庭圈空间')
+                  }
+                  onOpenFaceDiagnostic={() =>
+                    requireAuth(() => setIsFaceDiagnosticOpen(true), 'AI 智能面诊')
+                  }
                 />
               )}
 
@@ -286,11 +458,17 @@ export default function App() {
                   currentPortal={currentPortal}
                   currentLocation={currentLocation}
                   isLocationOutOfRange={isLocationOutOfRange}
-                  onOpenPortalSelector={() => setIsPortalOpen(true)}
-                  onOpenLocationSelector={() => setIsLocationOpen(true)}
-                  onSelectProduct={(p) => setSelectedProduct(p)}
-                  onOpenSearch={() => setIsSearchOpen(true)}
-                  onOpenCart={() => setIsCartOpen(true)}
+                  onOpenPortalSelector={() =>
+                    requireAuth(() => setIsPortalOpen(true), '区域门户切换')
+                  }
+                  onOpenLocationSelector={() =>
+                    requireAuth(() => setIsLocationOpen(true), 'LBS定位服务')
+                  }
+                  onSelectProduct={(p) =>
+                    requireAuth(() => setSelectedProduct(p), `商品详情: ${p.title}`)
+                  }
+                  onOpenSearch={() => requireAuth(() => setIsSearchOpen(true), '商城搜索')}
+                  onOpenCart={() => requireAuth(() => setIsCartOpen(true), '健康购物车')}
                   cartCount={cartItems.reduce((s, i) => s + i.quantity, 0)}
                 />
               )}
@@ -299,10 +477,18 @@ export default function App() {
                 <ServicesTab
                   currentLocation={currentLocation}
                   isLocationOutOfRange={isLocationOutOfRange}
-                  onOpenLocationSelector={() => setIsLocationOpen(true)}
-                  onSelectProduct={(p) => setSelectedProduct(p)}
-                  onOpenFaceDiagnostic={() => setIsFaceDiagnosticOpen(true)}
-                  onOpenConstitution={() => setIsConstitutionOpen(true)}
+                  onOpenLocationSelector={() =>
+                    requireAuth(() => setIsLocationOpen(true), 'LBS定位服务')
+                  }
+                  onSelectProduct={(p) =>
+                    requireAuth(() => setSelectedProduct(p), `服务预约: ${p.title}`)
+                  }
+                  onOpenFaceDiagnostic={() =>
+                    requireAuth(() => setIsFaceDiagnosticOpen(true), 'AI 智能面诊')
+                  }
+                  onOpenConstitution={() =>
+                    requireAuth(() => setIsConstitutionOpen(true), '中医体质辨识')
+                  }
                 />
               )}
 
@@ -310,17 +496,55 @@ export default function App() {
                 <MineTab
                   profile={profile}
                   orders={orders}
-                  onOpenOrder={(ord) => setSelectedOrder(ord)}
-                  onOpenFamilyCircle={() => setIsFamilyCircleOpen(true)}
-                  onOpenConstitution={() => setIsConstitutionOpen(true)}
-                  onOpenMedicalReport={() => setIsMedicalReportOpen(true)}
-                  onOpenHealthHub={() => setActiveTab('healthHub')}
+                  isLoggedIn={isLoggedIn}
+                  onOpenLogin={() => {
+                    setLoginNotice('从个人中心登录通行证');
+                    setIsLoginOpen(true);
+                  }}
+                  onLogout={handleLogout}
+                  onOpenOrder={(ord) =>
+                    requireAuth(() => setSelectedOrder(ord), `订单详情: ${ord.orderNo}`)
+                  }
+                  onOpenFamilyCircle={() =>
+                    requireAuth(() => setIsFamilyCircleOpen(true), '家庭圈空间')
+                  }
+                  onOpenConstitution={() =>
+                    requireAuth(() => setIsConstitutionOpen(true), '体质辨识报告')
+                  }
+                  onOpenMedicalReport={() =>
+                    requireAuth(() => setIsMedicalReportOpen(true), '体检报告')
+                  }
+                  onOpenHealthHub={() =>
+                    requireAuth(() => setActiveTab('healthHub'), '健康中枢与档案')
+                  }
                 />
               )}
             </div>
 
             {/* 底部 5 键健康导航栏 */}
-            <HealthTabBar activeTab={activeTab} onSelectTab={(tab) => setActiveTab(tab)} />
+            <HealthTabBar
+              activeTab={activeTab}
+              onSelectTab={(tab) => {
+                if (tab === activeTab) return;
+                if (tab === 'home') {
+                  setActiveTab('home');
+                  return;
+                }
+                requireAuth(() => setActiveTab(tab), TAB_NAMES[tab]);
+              }}
+            />
+
+            {/* 用户登录页面 (沉浸在 750rpx 移动框架内) */}
+            <LoginPage
+              isOpen={isLoginOpen}
+              onClose={() => {
+                setIsLoginOpen(false);
+                setPendingRedirect(null);
+                setLoginNotice('');
+              }}
+              redirectNotice={loginNotice}
+              onLoginSuccess={handleLoginSuccess}
+            />
           </div>
         </MobileFrame>
       </div>

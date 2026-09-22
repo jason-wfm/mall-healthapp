@@ -13,6 +13,8 @@ interface Props {
   onOpenDoc: () => void;
   showRpxInspector: boolean;
   onToggleRpxInspector: () => void;
+  isLoggedIn?: boolean;
+  onToggleAuth?: () => void;
 }
 
 export const AdaptationMetricsBar: React.FC<Props> = ({
@@ -24,7 +26,9 @@ export const AdaptationMetricsBar: React.FC<Props> = ({
   onToggleBezel,
   onOpenDoc,
   showRpxInspector,
-  onToggleRpxInspector
+  onToggleRpxInspector,
+  isLoggedIn,
+  onToggleAuth
 }) => {
   const effectiveWidth = isLandscape && currentDevice.width > 0 ? currentDevice.height : currentDevice.width;
   const rpxRatio = effectiveWidth > 0 ? (effectiveWidth / 750).toFixed(4) : '动态自适应';
@@ -136,6 +140,23 @@ export const AdaptationMetricsBar: React.FC<Props> = ({
             <BookOpen className="w-3.5 h-3.5" />
             <span>适配方案解析</span>
           </button>
+
+          {/* Auth State Switcher for rapid test */}
+          {onToggleAuth !== undefined && (
+            <button
+              id="btn-toggle-auth-state"
+              onClick={onToggleAuth}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs border transition-all cursor-pointer ${
+                isLoggedIn
+                  ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 hover:bg-teal-500/30'
+                  : 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+              }`}
+              title="点击在 [已登录] 与 [未登录拦截] 状态间快速切换"
+            >
+              <span className={`w-2 h-2 rounded-full ${isLoggedIn ? 'bg-teal-400' : 'bg-amber-400'}`} />
+              <span>{isLoggedIn ? '账号状态：已登录 (张明)' : '账号状态：未登录 (测试拦截)'}</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
