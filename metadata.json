@@ -1,0 +1,6 @@
+{
+  "name": "健康商城 C端移动端系统",
+  "description": "基于ShopSuite移动端750rpx适配架构打造的健康商城C端原型系统，涵盖健康档案、中医体质辨识、AI面诊舌诊、家庭健康空间、健康商城实物/到店/上门双派单、四大工作台及全链路交易。",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

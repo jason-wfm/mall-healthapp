@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* 隐藏滚动条但保留滚动能力 */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* 移动端流畅弹性滚动 */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* 物理像素 1px 细线边框 (Retina 屏高清适配) */
+  .border-retina-b {
+    position: relative;
+  }
+  .border-retina-b::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.08);
+    transform: scaleY(0.5);
+    transform-origin: 0 100%;
+  }
+
+  .border-retina-t {
+    position: relative;
+  }
+  .border-retina-t::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    height: 1px;
+    background-color: rgba(0, 0, 0, 0.08);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+  }
+}
+
+/* 全面屏安全区变量默认回退 */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
