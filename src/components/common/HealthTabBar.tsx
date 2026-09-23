@@ -16,8 +16,8 @@ export const HealthTabBar: React.FC<Props> = ({
   cartCount = 3
 }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 shadow-lg">
-      <div className="flex items-center justify-around h-[54px] px-2 max-w-[430px] mx-auto relative">
+    <nav className="shrink-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-30 shadow-lg pb-safe">
+      <div className="flex items-center justify-around h-[54px] px-2 w-full max-w-[430px] mx-auto relative">
         {/* 1. 首页 */}
         <button
           id="tab-home"

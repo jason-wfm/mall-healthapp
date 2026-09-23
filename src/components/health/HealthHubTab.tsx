@@ -27,7 +27,7 @@ export const HealthHubTab: React.FC<Props> = ({
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
 
   return (
-    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-screen text-slate-800">
+    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-full text-slate-800">
       {/* Top Header */}
       <div className="bg-white px-4 py-3 border-b border-slate-100 flex items-center justify-between sticky top-0 z-20">
         <div>

@@ -28,7 +28,7 @@ export const MineTab: React.FC<Props> = ({
   onOpenHealthHub
 }) => {
   return (
-    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-screen text-slate-800">
+    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-full text-slate-800">
       {/* 顶部个人卡片 (已登录 vs 未登录) */}
       <div className="bg-gradient-to-r from-teal-700 via-teal-800 to-slate-900 text-white pt-6 pb-5 px-4 rounded-b-3xl shadow-md">
         {isLoggedIn ? (

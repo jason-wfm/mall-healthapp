@@ -37,8 +37,9 @@ export const HealthSearchModal: React.FC<Props> = ({ isOpen, onClose, onSelectPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col max-w-[430px] mx-auto animate-in fade-in duration-150">
-      {/* Top Search Bar (P20) */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 sm:p-3 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-[440px] h-full sm:h-[92vh] sm:rounded-3xl bg-white flex flex-col overflow-hidden shadow-2xl relative">
+        {/* Top Search Bar (P20) */}
       <div className="p-3 border-b border-slate-100 flex items-center gap-2">
         <div className="flex-1 flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl text-xs">
           <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -187,6 +188,7 @@ export const HealthSearchModal: React.FC<Props> = ({ isOpen, onClose, onSelectPr
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

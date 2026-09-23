@@ -81,7 +81,7 @@ export const HomeTab: React.FC<Props> = ({
   }, [banners.length]);
 
   return (
-    <div className="pb-20 space-y-3.5 bg-slate-50/60 min-h-screen">
+    <div className="pb-20 space-y-3.5 bg-slate-50/60 min-h-full">
       {/* Search Header Bar */}
       <div className="bg-white px-4 pt-3 pb-2 border-b border-slate-100 sticky top-0 z-20 shadow-xs">
         <div

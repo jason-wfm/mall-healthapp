@@ -22,6 +22,16 @@ export const MobileFrame: React.FC<Props> = ({
   showBack = false
 }) => {
   const [timeStr, setTimeStr] = useState('09:41');
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -37,10 +47,20 @@ export const MobileFrame: React.FC<Props> = ({
 
   const isFullscreen = device.id === 'fullscreen';
 
+  // 1. 移动端真实浏览器环境自适应 (宽度 < 768px)：全屏沉浸式无边框，100% 贴合真机视口
+  if (isMobileViewport) {
+    return (
+      <div className="w-full h-full flex flex-col bg-slate-50 relative overflow-hidden">
+        {children}
+      </div>
+    );
+  }
+
+  // 2. 桌面端 H5 全屏自适应模式
   if (isFullscreen) {
     return (
-      <div className="w-full min-h-[calc(100vh-60px)] flex justify-center bg-slate-950/40">
-        <div className="w-full max-w-[430px] min-h-[calc(100vh-60px)] bg-slate-50 flex flex-col relative shadow-2xl">
+      <div className="w-full h-full flex justify-center items-center bg-slate-950/40 p-2 sm:p-4">
+        <div className="w-full max-w-[430px] h-full max-h-[920px] bg-slate-50 flex flex-col relative shadow-2xl rounded-3xl overflow-hidden border border-slate-800">
           {children}
         </div>
       </div>
@@ -52,14 +72,15 @@ export const MobileFrame: React.FC<Props> = ({
   const frameHeight = isLandscape ? device.width : device.height;
 
   return (
-    <div className="py-4 md:py-8 px-2 flex justify-center items-center overflow-auto min-h-[calc(100vh-60px)] bg-slate-950/70">
+    <div className="py-2 md:py-6 px-2 w-full h-full flex justify-center items-center overflow-auto bg-slate-950/70">
       <div
         style={{
           width: showBezel ? `${frameWidth + 24}px` : `${frameWidth}px`,
           height: showBezel ? `${frameHeight + 24}px` : `${frameHeight}px`,
-          maxWidth: '100%'
+          maxWidth: '100%',
+          maxHeight: '100%'
         }}
-        className={`relative transition-all duration-300 flex flex-col ${
+        className={`relative transition-all duration-300 flex flex-col shrink-0 ${
           showBezel
             ? 'p-[12px] bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 rounded-[50px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.15)] ring-1 ring-black/40'
             : 'rounded-[32px] overflow-hidden shadow-2xl border border-slate-700/80'
@@ -157,8 +178,8 @@ export const MobileFrame: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Main Content Area with Touch Scroll */}
-          <div className="flex-1 overflow-y-auto no-scrollbar touch-scroll bg-slate-100 relative">
+          {/* Main Content Area (单层滚动避免嵌套双滚动条) */}
+          <div className="flex-1 overflow-hidden relative flex flex-col">
             {children}
           </div>
 

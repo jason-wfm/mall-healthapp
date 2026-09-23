@@ -272,88 +272,89 @@ export const LoginPage: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white text-slate-800 animate-in fade-in duration-200">
-      {/* 顶部导航与返回按钮 */}
-      <div className="h-12 px-3 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-        <button
-          id="btn-login-back"
-          onClick={onClose}
-          className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 text-slate-700" />
-          <span>返回</span>
-        </button>
-        <span className="text-xs font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
-          <span>统一健康通行证</span>
-          <span className="text-[9px] bg-emerald-50 text-emerald-700 font-mono px-1.5 py-0.5 rounded border border-emerald-200">
-            modulithshop-v3
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 sm:p-3 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-[440px] h-full sm:h-[92vh] sm:rounded-3xl bg-white flex flex-col overflow-hidden shadow-2xl relative">
+        {/* 顶部导航与返回按钮 */}
+        <div className="h-12 px-3 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+          <button
+            id="btn-login-back"
+            onClick={onClose}
+            className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-700" />
+            <span>返回</span>
+          </button>
+          <span className="text-xs font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+            <span>统一健康通行证</span>
+            <span className="text-[9px] bg-emerald-50 text-emerald-700 font-mono px-1.5 py-0.5 rounded border border-emerald-200">
+              modulithshop-v3
+            </span>
           </span>
-        </span>
-        <button
-          id="btn-login-skip"
-          onClick={onClose}
-          className="text-[11px] text-slate-400 hover:text-slate-600 px-2 py-1 cursor-pointer"
-        >
-          暂不登录
-        </button>
-      </div>
+          <button
+            id="btn-login-skip"
+            onClick={onClose}
+            className="text-[11px] text-slate-400 hover:text-slate-600 px-2 py-1 cursor-pointer"
+          >
+            暂不登录
+          </button>
+        </div>
 
-      {/* 滚动主内容区 */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {/* 拦截来源定向跳转提示横幅 */}
-        {redirectNotice && (
-          <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
-            <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-bold block text-[11px] text-amber-800">未登录拦截提示</span>
-              <p className="text-[11px] text-amber-900/90 leading-relaxed font-medium">
-                {redirectNotice}
-              </p>
-              <span className="text-[10px] text-teal-700 font-bold block pt-0.5">
-                ✦ 登录成功后将自动跳转回前序页面继续操作
+        {/* 滚动主内容区 */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
+          {/* 拦截来源定向跳转提示横幅 */}
+          {redirectNotice && (
+            <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="font-bold block text-[11px] text-amber-800">未登录拦截提示</span>
+                <p className="text-[11px] text-amber-900/90 leading-relaxed font-medium">
+                  {redirectNotice}
+                </p>
+                <span className="text-[10px] text-teal-700 font-bold block pt-0.5">
+                  ✦ 登录成功后将自动跳转回前序页面继续操作
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 品牌 Logo 与标题 */}
+          <div className="text-center pt-1 pb-1">
+            <div className="w-14 h-14 bg-gradient-to-tr from-teal-700 to-emerald-500 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-md shadow-teal-700/20 mb-2.5">
+              🩺
+            </div>
+            <h1 className="text-lg font-black text-slate-900">健康商城 · 登录中心</h1>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              基于开源 modulithshop-v3-java 账户认证接口规范构建
+            </p>
+          </div>
+
+          {/* 开源接口规范标签栏 */}
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 text-[11px] space-y-2">
+            <div className="flex items-center justify-between font-bold text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <Code2 className="w-3.5 h-3.5 text-teal-700" />
+                <span>开源项目已对接接口 (SpringBoot3)</span>
+              </span>
+              <span className="text-[9px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>HTTP 200 就绪</span>
               </span>
             </div>
-          </div>
-        )}
-
-        {/* 品牌 Logo 与标题 */}
-        <div className="text-center pt-1 pb-1">
-          <div className="w-14 h-14 bg-gradient-to-tr from-teal-700 to-emerald-500 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-md shadow-teal-700/20 mb-2.5">
-            🩺
-          </div>
-          <h1 className="text-lg font-black text-slate-900">健康商城 · 登录中心</h1>
-          <p className="text-[11px] text-slate-400 mt-0.5">
-            基于开源 modulithshop-v3-java 账户认证接口规范构建
-          </p>
-        </div>
-
-        {/* 开源接口规范标签栏 */}
-        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 text-[11px] space-y-2">
-          <div className="flex items-center justify-between font-bold text-slate-700">
-            <span className="flex items-center gap-1.5">
-              <Code2 className="w-3.5 h-3.5 text-teal-700" />
-              <span>开源项目已对接接口 (SpringBoot3)</span>
-            </span>
-            <span className="text-[9px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>HTTP 200 就绪</span>
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
-            <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate">
-              <div className="text-[9px] text-slate-400 font-sans">微信登录</div>
-              <div className="text-emerald-700 font-bold truncate">/front/account/wechat</div>
-            </div>
-            <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate">
-              <div className="text-[9px] text-slate-400 font-sans">短信登录</div>
-              <div className="text-teal-700 font-bold truncate">/front/account/login</div>
-            </div>
-            <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate">
-              <div className="text-[9px] text-slate-400 font-sans">账号登录</div>
-              <div className="text-indigo-700 font-bold truncate">/front/account/login/login</div>
+            <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
+              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
+                <div className="text-[9px] text-slate-400 font-sans truncate">微信登录</div>
+                <div className="text-emerald-700 font-bold truncate text-[9px]">/front/account/wechat</div>
+              </div>
+              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
+                <div className="text-[9px] text-slate-400 font-sans truncate">短信登录</div>
+                <div className="text-teal-700 font-bold truncate text-[9px]">/front/account/login</div>
+              </div>
+              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
+                <div className="text-[9px] text-slate-400 font-sans truncate">账号登录</div>
+                <div className="text-indigo-700 font-bold truncate text-[9px]">/front/account/login/login</div>
+              </div>
             </div>
           </div>
-        </div>
 
         {/* 演示环境：一键测试账号快捷填充 */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2">
@@ -943,6 +944,7 @@ export const LoginPage: React.FC<Props> = ({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

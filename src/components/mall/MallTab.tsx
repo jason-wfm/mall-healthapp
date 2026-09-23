@@ -49,15 +49,15 @@ export const MallTab: React.FC<Props> = ({
   });
 
   return (
-    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-screen">
+    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-full">
       {/* 顶部美团式定位与区域门户栏 (P17) */}
       <div className="bg-white px-3.5 pt-3 pb-2.5 border-b border-slate-100 sticky top-0 z-20 shadow-xs space-y-2">
         {/* Row 1: Location & Portal */}
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs gap-2">
           {/* Location Chip */}
           <button
             onClick={onOpenLocationSelector}
-            className="flex items-center gap-1 text-slate-800 font-bold max-w-[200px] truncate hover:text-teal-700 transition-colors"
+            className="flex items-center gap-1 text-slate-800 font-bold flex-1 min-w-0 truncate hover:text-teal-700 transition-colors"
           >
             <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
             <span className="truncate text-xs">{currentLocation}</span>

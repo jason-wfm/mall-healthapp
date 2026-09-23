@@ -28,6 +28,7 @@ import { ServicesTab } from './components/services/ServicesTab';
 import { MineTab } from './components/mine/MineTab';
 
 // Health Modals & Sheets
+import { ArchitectureDocModal } from './components/modules/ArchitectureDocModal';
 import { PortalSelectorSheet } from './components/common/PortalSelectorSheet';
 import { LocationSelectorModal } from './components/common/LocationSelectorModal';
 import { ConstitutionAssessmentModal } from './components/health/ConstitutionAssessmentModal';
@@ -64,6 +65,7 @@ export default function App() {
   const [currentDevice, setCurrentDevice] = useState<DeviceConfig>(DEVICE_PRESETS[0]);
   const [isLandscape, setIsLandscape] = useState(false);
   const [showBezel, setShowBezel] = useState(true);
+  const [isDocOpen, setIsDocOpen] = useState(false);
 
   // Health Navigation & Data
   const [activeTab, setActiveTab] = useState<HealthTabType>('home');
@@ -299,7 +301,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-900 overflow-hidden select-none font-sans">
+    <div className="flex flex-col h-[100dvh] w-full max-w-full bg-slate-900 overflow-hidden font-sans">
       {/* 顶部机型与 750rpx 适配监控栏 */}
       <AdaptationMetricsBar
         currentDevice={currentDevice}
@@ -310,7 +312,7 @@ export default function App() {
         onToggleBezel={() => setShowBezel(!showBezel)}
         showRpxInspector={false}
         onToggleRpxInspector={() => {}}
-        onOpenDoc={() => {}}
+        onOpenDoc={() => setIsDocOpen(true)}
         isLoggedIn={isLoggedIn}
         onToggleAuth={() => {
           if (isLoggedIn) {
@@ -323,7 +325,7 @@ export default function App() {
       />
 
       {/* 模拟器舞台区域 */}
-      <div className="flex-1 overflow-hidden relative flex items-center justify-center p-2 sm:p-4 bg-slate-950/80">
+      <div className="flex-1 overflow-hidden relative flex items-center justify-center p-0 md:p-3 bg-slate-950/90">
         <MobileFrame
           device={currentDevice}
           isLandscape={isLandscape}
@@ -678,6 +680,11 @@ export default function App() {
           );
         }}
       />
+
+      {/* 16. 移动端 750rpx 适配与架构解析文档 */}
+      {isDocOpen && (
+        <ArchitectureDocModal onClose={() => setIsDocOpen(false)} />
+      )}
     </div>
   );
 }

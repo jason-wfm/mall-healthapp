@@ -25,17 +25,17 @@ export const ServicesTab: React.FC<Props> = ({
   const serviceItems = MOCK_HEALTH_PRODUCTS.filter((p) => p.type !== 'product');
 
   return (
-    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-screen">
+    <div className="pb-24 space-y-3 bg-slate-50/70 min-h-full">
       {/* 顶部定位与服务保障 */}
       <div className="bg-white px-4 py-3 border-b border-slate-100 flex items-center justify-between sticky top-0 z-20 shadow-xs">
-        <div>
+        <div className="min-w-0 flex-1 pr-2">
           <span className="text-[10px] text-teal-700 font-bold block">健康管理与医护服务</span>
           <button
             onClick={onOpenLocationSelector}
-            className="flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-teal-700"
+            className="flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-teal-700 truncate max-w-full"
           >
-            <MapPin className="w-3.5 h-3.5 text-teal-600" />
-            <span className="truncate max-w-[200px]">{currentLocation}</span>
+            <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+            <span className="truncate">{currentLocation}</span>
           </button>
         </div>
         <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
