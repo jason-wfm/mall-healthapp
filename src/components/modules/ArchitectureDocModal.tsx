@@ -19,7 +19,7 @@ export const ArchitectureDocModal: React.FC<Props> = ({ onClose }) => {
             </div>
             <div className="min-w-0">
               <h2 className="font-bold text-white text-sm sm:text-base truncate">
-                ShopSuite Mobile 移动端适配与架构解析
+                HealthShop Mobile 移动端适配与架构解析
               </h2>
               <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                 750rpx 多端自适应原理、安全区方案与社交电商业务闭环
@@ -137,7 +137,7 @@ export const ArchitectureDocModal: React.FC<Props> = ({ onClose }) => {
                   <span>Retina 高分屏 1px 细线边框 (Hairline Border)</span>
                 </h3>
                 <p className="text-[11px] sm:text-xs text-slate-300">
-                  在高 DPR 设备（如 @2x、@3x Retina 屏）上，<code>border: 1px solid</code> 会显得粗大。ShopSuite 采用伪元素配合 <code>transform: scaleY(0.5)</code> 实现真正的 0.5px 高清细线。
+                  在高 DPR 设备（如 @2x、@3x Retina 屏）上，<code>border: 1px solid</code> 会显得粗大。HealthShop 采用伪元素配合 <code>transform: scaleY(0.5)</code> 实现真正的 0.5px 高清细线。
                 </p>
               </div>
             </div>
@@ -207,7 +207,7 @@ export const ArchitectureDocModal: React.FC<Props> = ({ onClose }) => {
 {`{
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "ShopSuite",
+    "navigationBarTitleText": "HealthShop",
     "navigationBarBackgroundColor": "#FFFFFF",
     "backgroundColor": "#F8F9FA",
     "rpxCalcMaxDeviceWidth": 480, // 最大计算宽度(避免PC端无限放大)
@@ -248,7 +248,7 @@ export function getSystemAdaptation() {
         {/* Footer */}
         <div className="px-4 sm:px-6 py-3 bg-slate-950/80 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0 text-xs pb-safe">
           <span className="text-[11px] sm:text-xs text-slate-400 truncate max-w-full text-center sm:text-left">
-            ShopSuite Mobile 技术规范 · 750rpx 响应式与社交电商业务闭环
+            HealthShop Mobile 技术规范 · 750rpx 响应式与社交电商业务闭环
           </span>
           <button
             onClick={onClose}

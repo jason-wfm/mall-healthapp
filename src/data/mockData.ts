@@ -420,7 +420,7 @@ export const MOCK_COMMUNITY_POSTS: CommunityPost[] = [
     },
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80',
     title: '拼团入手的降噪头戴终于到了！音质彻底惊艳到我🎧',
-    content: '之前一直在纠结买哪款，看到群里姐妹发了ShopSuite 2人拼团立减110元！戴上去隔音效果绝了，低音浑厚不轰头，通勤地铁上世界瞬间安静。',
+    content: '之前一直在纠结买哪款，看到群里姐妹发了HealthShop 2人拼团立减110元！戴上去隔音效果绝了，低音浑厚不轰头，通勤地铁上世界瞬间安静。',
     likes: 382,
     isLiked: false,
     commentsCount: 46,

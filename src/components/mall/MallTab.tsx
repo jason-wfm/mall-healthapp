@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HealthProduct, PortalCity } from '../../types/health';
 import { MOCK_HEALTH_PRODUCTS } from '../../data/healthMockData';
+import { apiGetCategories, apiGetProducts, MallCategory } from '../../services/mallApi';
 import { MapPin, Building2, Search, Zap, AlertTriangle, ShieldCheck, ShoppingCart, ChevronDown, Filter } from 'lucide-react';
 
 interface Props {
   currentPortal: PortalCity;
   currentLocation: string;
   isLocationOutOfRange: boolean;
+  /** [healthmall-ext] 门户筛选（P_A5）：选中门户 ID，空=平台聚合 */
+  portalId?: number | null;
   onOpenPortalSelector: () => void;
   onOpenLocationSelector: () => void;
   onSelectProduct: (product: HealthProduct) => void;
@@ -19,6 +22,7 @@ export const MallTab: React.FC<Props> = ({
   currentPortal,
   currentLocation,
   isLocationOutOfRange,
+  portalId,
   onOpenPortalSelector,
   onOpenLocationSelector,
   onSelectProduct,
@@ -26,26 +30,53 @@ export const MallTab: React.FC<Props> = ({
   onOpenCart,
   cartCount
 }) => {
-  const [activeCategory, setActiveCategory] = useState<
-    'all' | 'hardware' | 'food' | 'medical' | 'inStore' | 'doorstep'
-  >('all');
+  // [healthmall-ext] 期1：商品列表接真实 API；类目 tabs 由后端 listCategory 驱动，失败回退内置
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [categories, setCategories] = useState<MallCategory[]>([]);
+  const [products, setProducts] = useState<HealthProduct[]>(MOCK_HEALTH_PRODUCTS);
+  const [listLoading, setListLoading] = useState(false);
 
-  const categories = [
+  useEffect(() => {
+    apiGetCategories().then((cats) => {
+      if (cats.length > 0) setCategories(cats);
+    }).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setListLoading(true);
+    apiGetProducts({
+      page: 1,
+      size: 20,
+      portal_id: portalId ?? undefined,
+      category_id: activeCategory !== 'all' ? Number(activeCategory) : undefined
+    })
+      .then((res) => {
+        if (!cancelled) setProducts(res.items);
+      })
+      .catch(() => {
+        // 后端不可达/VITE_MOCK：回退原型 mock，页面不空屏
+        if (!cancelled) setProducts(MOCK_HEALTH_PRODUCTS);
+      })
+      .finally(() => {
+        if (!cancelled) setListLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [portalId, activeCategory]);
+
+  const categoryTabs = [
     { id: 'all', label: '全部门类' },
-    { id: 'hardware', label: '智能硬件' },
-    { id: 'food', label: '健康食品' },
-    { id: 'medical', label: '医疗器械' },
-    { id: 'inStore', label: '到店服务 📍' },
-    { id: 'doorstep', label: '上门服务 📍' }
+    ...categories.map((c) => ({ id: String(c.category_id), label: c.category_name }))
   ];
 
   // 过滤商品：如果定位超出范围，自动隐藏上门服务与到店服务（实物商品不受影响）
-  const filteredProducts = MOCK_HEALTH_PRODUCTS.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     if (isLocationOutOfRange && (p.type === 'inStoreService' || p.type === 'doorstepService')) {
       return false;
     }
-    if (activeCategory === 'all') return true;
-    return p.category === activeCategory;
+    return true;
   });
 
   return (
@@ -125,7 +156,7 @@ export const MallTab: React.FC<Props> = ({
           </div>
 
           <div className="grid grid-cols-3 gap-2 mt-2.5">
-            {MOCK_HEALTH_PRODUCTS.slice(0, 3).map((p) => (
+            {products.slice(0, 3).map((p) => (
               <div
                 key={p.id}
                 onClick={() => onSelectProduct(p)}
@@ -155,7 +186,7 @@ export const MallTab: React.FC<Props> = ({
       {/* 分类切换 Tab */}
       <div className="px-3">
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          {categories.map((c) => (
+          {categoryTabs.map((c) => (
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id as any)}
@@ -173,6 +204,12 @@ export const MallTab: React.FC<Props> = ({
 
       {/* 商品与服务列表 */}
       <div className="px-3 space-y-2.5">
+        {listLoading && (
+          <p className="text-xs text-slate-400 text-center py-6">商品加载中...</p>
+        )}
+        {!listLoading && filteredProducts.length === 0 && (
+          <p className="text-xs text-slate-400 text-center py-6">暂无商品</p>
+        )}
         {filteredProducts.map((product) => (
           <div
             key={product.id}

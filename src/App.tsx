@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DeviceConfig } from './types';
 import { DEVICE_PRESETS } from './data/mockData';
 import {
   DEFAULT_PROFILE,
   MOCK_HEALTH_PRODUCTS,
-  MOCK_ORDERS,
-  INITIAL_CART
+  MOCK_ORDERS
 } from './data/healthMockData';
 import {
   HealthTabType,
   PortalCity,
   HealthProduct,
   HealthOrder,
-  CartItem as HealthCartItem
+  HealthArticle
 } from './types/health';
+import { ORDER_STATE, ORDER_STATE_TEXT, type CartRow, type TradeOrder } from './types/trade';
 
 // Layout & Frame
 import { AdaptationMetricsBar } from './components/adaptation/AdaptationMetricsBar';
@@ -49,6 +49,35 @@ import { OrderDetailModal } from './components/order/OrderDetailModal';
 import { LoginPage, UserAccountInfo } from './components/auth/LoginPage';
 import { CheckCircle2, Sparkles, LogIn } from 'lucide-react';
 
+// [healthmall-ext] 多商家 P2：商家中心（H5 页面化：招募页/提交资料页 + 资金中心弹窗）
+import { RecruitPage } from './components/mine/RecruitPage';
+import { ArticleDetailModal } from './components/home/ArticleDetailModal';
+import { apiGetPortalInfo } from './services/merchantApi';
+import { MerchantApplyPage } from './components/mine/MerchantApplyPage';
+import { FinanceCenterModal } from './components/finance/FinanceCenterModal';
+
+// [healthmall-ext] 期2：发现页 · 全量资讯
+import { DiscoverTab } from './components/discover/DiscoverTab';
+
+// [healthmall-ext] 二期：完整购物链路 + 家庭交易共享/亲情代付
+import { FamilyPayModal } from './components/health/FamilyPayModal';
+import {
+  apiAddCart,
+  apiCancelOrder,
+  apiConfirmReceipt,
+  apiEditCartQuantity,
+  apiGetCart,
+  apiGetOrders,
+  apiRemoveCart,
+  buildCartParam
+} from './services/tradeApi';
+
+// [healthmall-ext] P_A4：门户信息模块级缓存（动态标题/品牌色；列表过滤在后端按 Host 上下文完成）
+const portalState: { info: import('./services/merchantApi').PortalInfo | null } = { info: null };
+export function getPortalInfo() {
+  return portalState.info;
+}
+
 export default function App() {
   // Tab Name Mapping
   const TAB_NAMES: Record<HealthTabType, string> = {
@@ -70,6 +99,8 @@ export default function App() {
   // Health Navigation & Data
   const [activeTab, setActiveTab] = useState<HealthTabType>('home');
   const [currentPortal, setCurrentPortal] = useState<PortalCity>('深圳门户');
+  // [healthmall-ext] P_A5：门户筛选（null=平台聚合页全量）
+  const [portalId, setPortalId] = useState<number | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>(
     '深圳市南山区科技园南路88号3栋1002'
   );
@@ -77,6 +108,7 @@ export default function App() {
 
   // User Authentication & Interceptor State (默认为未登录，用于直接展示拦截与登录返回)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState<boolean>(false);
   const [loginNotice, setLoginNotice] = useState<string>('');
   const [authToast, setAuthToast] = useState<string | null>(null);
@@ -85,10 +117,23 @@ export default function App() {
     action: () => void;
   } | null>(null);
 
+  // [healthmall-ext] 多商家 P2：商家中心（全屏页面栈 + 资金中心弹窗）
+  const [activeView, setActiveView] = useState<'recruit' | 'apply' | null>(null);
+  const [isFinanceCenterOpen, setIsFinanceCenterOpen] = useState<boolean>(false);
+
+  // [healthmall-ext] 期1：健康资讯详情弹窗
+  const [selectedArticle, setSelectedArticle] = useState<HealthArticle | null>(null);
+  const [isArticleDetailOpen, setIsArticleDetailOpen] = useState<boolean>(false);
+
   // Business state
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
-  const [cartItems, setCartItems] = useState<HealthCartItem[]>(INITIAL_CART);
+  // [healthmall-ext] 二期：购物车/订单接真（/front/trade/**），mock 仅作失败回退
+  const [cartRows, setCartRows] = useState<CartRow[]>([]);
+  const [cartLoading, setCartLoading] = useState(false);
   const [orders, setOrders] = useState<HealthOrder[]>(MOCK_ORDERS);
+  // 待支付订单（收银台上下文）
+  const [pendingOrder, setPendingOrder] = useState<{ orderId: string; amount: number } | null>(null);
+  const [isFamilyPayOpen, setIsFamilyPayOpen] = useState(false);
 
   // Require Auth Guard (未登录拦截并记录回跳目标)
   const requireAuth = (action: () => void, targetDescription: string) => {
@@ -108,6 +153,7 @@ export default function App() {
   const handleLoginSuccess = (user: UserAccountInfo) => {
     setIsLoggedIn(true);
     setIsLoginOpen(false);
+    setAuthToken(user.token || null);
     setProfile((prev) => ({
       ...prev,
       name: user.name
@@ -133,10 +179,26 @@ export default function App() {
   // 退出登录
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setAuthToken(null);
     setActiveTab('home');
     setAuthToast('已退出登录，已切换至【未登录】模式，点击任意卡片/超链将拦截跳转至登录页');
     setTimeout(() => setAuthToast(null), 4000);
   };
+
+  // [healthmall-ext] P_A4：启动加载门户信息——动态标题与品牌主色（局部生效）
+  useEffect(() => {
+    apiGetPortalInfo()
+      .then((res) => {
+        if (res.data?.portal_name) {
+          portalState.info = res.data;
+          document.title = `${res.data.portal_name}`;
+          if (res.data.brand_color) {
+            document.documentElement.style.setProperty('--portal-brand', res.data.brand_color);
+          }
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Modals visibility
   const [isPortalOpen, setIsPortalOpen] = useState(false);
@@ -161,12 +223,7 @@ export default function App() {
     sku: string;
     quantity: number;
     price: number;
-  } | null>(null);
-  const [checkoutPayload, setCheckoutPayload] = useState<{
-    items: any[];
-    totalAmount: number;
-    askFamilyPay: boolean;
-    payer: string;
+    itemId: number | null;
   } | null>(null);
 
   // Location selector change
@@ -175,50 +232,93 @@ export default function App() {
     setIsLocationOutOfRange(outOfRange);
   };
 
-  // Cart operations
+  // Cart operations（接真 /front/trade/cart/**）
+  const refreshCart = async (token: string) => {
+    setCartLoading(true);
+    try {
+      const { rows } = await apiGetCart(token);
+      setCartRows(rows);
+    } catch {
+      // 保留现有行（失败不空屏）
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  const refreshOrders = async (token: string) => {
+    try {
+      const list: TradeOrder[] = await apiGetOrders(token, { page: 1, size: 20 });
+      setOrders(list.map(mapTradeOrder));
+    } catch {
+      // 失败保留 mock/现有
+    }
+  };
+
+  const mapTradeOrder = (o: TradeOrder): HealthOrder => ({
+    id: o.order_id,
+    orderNo: o.order_id,
+    orderType: 'product',
+    status:
+      o.order_state_id === ORDER_STATE.WAIT_PAY
+        ? 'pending_pay'
+        : o.order_state_id === ORDER_STATE.SHIPPED
+        ? 'pending_receive'
+        : o.order_state_id >= ORDER_STATE.RECEIVED
+        ? 'completed'
+        : o.order_state_id === ORDER_STATE.CANCEL
+        ? 'closed'
+        : 'pending_ship',
+    statusText: ORDER_STATE_TEXT[o.order_state_id] || '处理中',
+    totalAmount: o.order_payment_amount,
+    orderTime: o.order_time ? new Date(o.order_time).toLocaleString('zh-CN', { hour12: false }) : undefined,
+    paidAmount: o.order_is_paid === 3013 ? o.order_payment_amount : 0,
+    items: o.items.map((it) => ({
+      title: it.product_name,
+      sku: it.item_name || '标准',
+      price: it.item_unit_price ?? 0,
+      quantity: it.order_item_quantity,
+      coverImage: it.order_item_image || ''
+    }))
+  });
+
   const handleAddToCart = (
     product: HealthProduct,
     sku: string,
     quantity: number,
-    price: number
+    _price: number,
+    itemId?: number
   ) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id && item.sku === sku);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === existing.id ? { ...item, quantity: item.quantity + quantity } : item
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: `cart-${Date.now()}`,
-          product,
-          sku,
-          quantity,
-          price,
-          addedBy: '本人 (张明)'
-        }
-      ];
-    });
+    if (!authToken) return;
+    if (!itemId) {
+      setAuthToast('该商品暂不支持加购（缺少 SKU）');
+      setTimeout(() => setAuthToast(null), 3000);
+      return;
+    }
+    apiAddCart(authToken, itemId, quantity)
+      .then(() => refreshCart(authToken))
+      .catch((err) => {
+        setAuthToast(err?.message || '加购失败');
+        setTimeout(() => setAuthToast(null), 3000);
+      });
   };
 
   const handleUpdateCartQty = (id: string, delta: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const nextQty = item.quantity + delta;
-            return nextQty > 0 ? { ...item, quantity: nextQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as HealthCartItem[]
-    );
+    const row = cartRows.find((r) => String(r.cart_id) === id);
+    if (!row || !authToken) return;
+    const nextQty = row.quantity + delta;
+    const op =
+      nextQty <= 0
+        ? apiRemoveCart(authToken, row.cart_id)
+        : apiEditCartQuantity(authToken, row.cart_id, nextQty);
+    op.then(() => refreshCart(authToken)).catch(() => refreshCart(authToken));
   };
 
   const handleRemoveCartItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    const row = cartRows.find((r) => String(r.cart_id) === id);
+    if (!row || !authToken) return;
+    apiRemoveCart(authToken, row.cart_id)
+      .then(() => refreshCart(authToken))
+      .catch(() => refreshCart(authToken));
   };
 
   // Instant Buy
@@ -226,71 +326,64 @@ export default function App() {
     product: HealthProduct,
     sku: string,
     quantity: number,
-    price: number
+    price: number,
+    itemId?: number
   ) => {
-    setSingleBuyPayload({ product, sku, quantity, price });
+    setSingleBuyPayload({ product, sku, quantity, price, itemId: itemId ?? null });
     setSelectedProduct(null);
     setIsCheckoutOpen(true);
   };
 
-  // Checkout to Payment
-  const handleConfirmOrder = (orderData: any) => {
-    setCheckoutPayload(orderData);
+  // 下单成功（待付款）→ 打开收银台
+  const handleOrderCreated = (orderIds: string[], payAmount: number) => {
     setIsCheckoutOpen(false);
+    setPendingOrder({ orderId: orderIds[0], amount: payAmount });
     setIsPaymentOpen(true);
   };
 
-  // Payment Success -> create order & open detail
+  // 支付成功 → 刷新订单与购物车
   const handlePaymentSuccess = () => {
     setIsPaymentOpen(false);
-    const firstItem = checkoutPayload?.items[0];
-    const newOrder: HealthOrder = {
-      id: `ord-${Date.now()}`,
-      orderNo: `HLT2026${Math.floor(100000 + Math.random() * 900000)}`,
-      orderType: firstItem?.product?.type || 'product',
-      status: 'pending_use',
-      statusText:
-        firstItem?.product?.type === 'doorstepService'
-          ? '待护士上门 (智能调度中)'
-          : firstItem?.product?.type === 'inStoreService'
-          ? '待到店核销'
-          : '待揽收发货',
-      totalAmount: checkoutPayload?.totalAmount || 199,
-      orderTime: '刚刚 10:15',
-      items: [
-        {
-          title: firstItem?.product?.title || '健康服务项目',
-          sku: firstItem?.sku || '标准版',
-          price: firstItem?.price || 199,
-          quantity: firstItem?.quantity || 1,
-          coverImage:
-            firstItem?.product?.coverImage ||
-            'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300'
-        }
-      ],
-      storeName: firstItem?.product?.store?.name,
-      verificationCode: '8942-1082-3901',
-      dispatchInfo:
-        firstItem?.product?.type === 'doorstepService'
-          ? {
-              status: 'arriving',
-              nurseName: '李晓华 (主管护师)',
-              nursePhone: '138****8899',
-              nursePhoto: '👩‍⚕️',
-              estimatedMinutes: 15,
-              currentDistanceKm: 1.8
-            }
-          : undefined
-    };
-
-    setOrders([newOrder, ...orders]);
-    setSelectedOrder(newOrder);
-    // Clear cart if was cart checkout
-    if (!singleBuyPayload) {
-      setCartItems([]);
-    }
     setSingleBuyPayload(null);
+    if (authToken) {
+      refreshOrders(authToken);
+      refreshCart(authToken);
+    }
+    setAuthToast('支付成功！订单已生成');
+    setTimeout(() => setAuthToast(null), 3200);
   };
+
+  // 待付款订单取消（代付请求由后端联动失效）
+  const handleCancelOrder = (orderId: string) => {
+    if (!authToken) return;
+    apiCancelOrder(authToken, orderId)
+      .then(() => refreshOrders(authToken))
+      .catch((err) => {
+        setAuthToast(err?.message || '取消失败');
+        setTimeout(() => setAuthToast(null), 3000);
+      });
+  };
+
+  // 确认收货
+  const handleConfirmReceipt = (orderId: string) => {
+    if (!authToken) return;
+    apiConfirmReceipt(authToken, orderId)
+      .then(() => refreshOrders(authToken))
+      .catch((err) => {
+        setAuthToast(err?.message || '确认收货失败');
+        setTimeout(() => setAuthToast(null), 3000);
+      });
+  };
+
+  // 登录态变化：拉取真实购物车与订单
+  useEffect(() => {
+    if (!authToken) {
+      setCartRows([]);
+      return;
+    }
+    refreshCart(authToken);
+    refreshOrders(authToken);
+  }, [authToken]);
 
   // Save metric to profile
   const handleSaveMetric = (type: string, value: string, text: string) => {
@@ -379,6 +472,23 @@ export default function App() {
                 }
               }}
             >
+              {/* [healthmall-ext] 全屏页面视图：招募详情 / 商家入驻提交（覆盖 Tab 内容） */}
+              {activeView === 'recruit' && (
+                <RecruitPage
+                  onBack={() => setActiveView(null)}
+                  onEnterApply={() => setActiveView('apply')}
+                />
+              )}
+              {activeView === 'apply' && (
+                <MerchantApplyPage
+                  token={authToken}
+                  onClose={() => setActiveView(null)}
+                  onEnterFinance={() => setIsFinanceCenterOpen(true)}
+                />
+              )}
+
+              {!activeView && (
+              <>
               {activeTab === 'home' && (
                 <HomeTab
                   currentPortal={currentPortal}
@@ -418,18 +528,27 @@ export default function App() {
                   }
                   onOpenRecruit={() =>
                     requireAuth(
-                      () => alert('已进入平台服务商招募通道，审核通过即可接单获得返现！'),
+                      () => setActiveView('recruit'),
                       '平台入驻招募'
                     )
                   }
                   onOpenArticle={(art) =>
-                    requireAuth(
-                      () =>
-                        alert(
-                          `打开健康资讯：《${art.title}》\n已为您匹配慢病关怀与体质调理方案`
-                        ),
-                      `健康资讯: ${art.title}`
-                    )
+                    requireAuth(() => {
+                      setSelectedArticle(art);
+                      setIsArticleDetailOpen(true);
+                    }, `健康资讯: ${art.title}`)
+                  }
+                />
+              )}
+
+              {activeTab === 'discover' && (
+                <DiscoverTab
+                  onBack={() => setActiveTab('home')}
+                  onOpenArticle={(art) =>
+                    requireAuth(() => {
+                      setSelectedArticle(art);
+                      setIsArticleDetailOpen(true);
+                    }, `健康资讯: ${art.title}`)
                   }
                 />
               )}
@@ -458,6 +577,7 @@ export default function App() {
               {activeTab === 'mall' && (
                 <MallTab
                   currentPortal={currentPortal}
+                  portalId={portalId}
                   currentLocation={currentLocation}
                   isLocationOutOfRange={isLocationOutOfRange}
                   onOpenPortalSelector={() =>
@@ -471,7 +591,7 @@ export default function App() {
                   }
                   onOpenSearch={() => requireAuth(() => setIsSearchOpen(true), '商城搜索')}
                   onOpenCart={() => requireAuth(() => setIsCartOpen(true), '健康购物车')}
-                  cartCount={cartItems.reduce((s, i) => s + i.quantity, 0)}
+                  cartCount={cartRows.reduce((s, i) => s + i.quantity, 0)}
                 />
               )}
 
@@ -510,6 +630,9 @@ export default function App() {
                   onOpenFamilyCircle={() =>
                     requireAuth(() => setIsFamilyCircleOpen(true), '家庭圈空间')
                   }
+                  onOpenFamilyPay={() =>
+                    requireAuth(() => setIsFamilyPayOpen(true), '亲情代付')
+                  }
                   onOpenConstitution={() =>
                     requireAuth(() => setIsConstitutionOpen(true), '体质辨识报告')
                   }
@@ -519,7 +642,18 @@ export default function App() {
                   onOpenHealthHub={() =>
                     requireAuth(() => setActiveTab('healthHub'), '健康中枢与档案')
                   }
+                  onOpenMerchantApply={() =>
+                    requireAuth(() => setActiveView('apply'), '商家入驻')
+                  }
+                  onOpenApplyProgress={() =>
+                    requireAuth(() => setActiveView('apply'), '入驻进度')
+                  }
+                  onOpenMerchantFinance={() =>
+                    requireAuth(() => setIsFinanceCenterOpen(true), '商家资金中心')
+                  }
                 />
+              )}
+              </>
               )}
             </div>
 
@@ -547,6 +681,23 @@ export default function App() {
               redirectNotice={loginNotice}
               onLoginSuccess={handleLoginSuccess}
             />
+
+            {/* [healthmall-ext] 多商家 P2：资金中心弹窗 */}
+            <FinanceCenterModal
+              isOpen={isFinanceCenterOpen}
+              token={authToken}
+              onClose={() => setIsFinanceCenterOpen(false)}
+            />
+
+            {/* [healthmall-ext] 期1：健康资讯详情弹窗 */}
+            <ArticleDetailModal
+              isOpen={isArticleDetailOpen}
+              article={selectedArticle}
+              onClose={() => {
+                setIsArticleDetailOpen(false);
+                setSelectedArticle(null);
+              }}
+            />
           </div>
         </MobileFrame>
       </div>
@@ -556,8 +707,11 @@ export default function App() {
       <PortalSelectorSheet
         isOpen={isPortalOpen}
         onClose={() => setIsPortalOpen(false)}
-        currentPortal={currentPortal}
-        onSelectPortal={(city) => setCurrentPortal(city)}
+        currentPortalId={portalId}
+        onSelectPortal={(p) => {
+          setPortalId(p.portal_id);
+          setCurrentPortal(p.portal_name);
+        }}
       />
 
       {/* 2. 定位与服务范围选择器 */}
@@ -600,6 +754,7 @@ export default function App() {
       {/* 6. 家庭圈健康空间 */}
       <FamilyCircleModal
         isOpen={isFamilyCircleOpen}
+        token={authToken}
         onClose={() => setIsFamilyCircleOpen(false)}
       />
 
@@ -639,11 +794,20 @@ export default function App() {
         onSelectProduct={(p) => setSelectedProduct(p)}
       />
 
-      {/* 12. 共享购物车 */}
+      {/* 12. 共享购物车（接真 /front/trade/cart/**） */}
       <HealthCartModal
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
+        loading={cartLoading}
+        cartItems={cartRows.map((r) => ({
+          id: String(r.cart_id),
+          title: r.product_name,
+          spec: r.spec,
+          quantity: r.quantity,
+          price: r.price,
+          coverImage: r.cover_image,
+          available: r.available
+        }))}
         onUpdateQuantity={handleUpdateCartQty}
         onRemoveItem={handleRemoveCartItem}
         onGoToCheckout={() => {
@@ -652,21 +816,58 @@ export default function App() {
         }}
       />
 
-      {/* 13. 订单确认结算 */}
+      {/* 13. 订单确认结算（真实地址/预览/下单） */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
-        items={cartItems}
-        singleProductBuy={singleBuyPayload}
-        onConfirmOrder={handleConfirmOrder}
+        token={authToken}
+        lines={
+          singleBuyPayload
+            ? [
+                {
+                  title: singleBuyPayload.product.title,
+                  spec: singleBuyPayload.sku,
+                  quantity: singleBuyPayload.quantity,
+                  price: singleBuyPayload.price,
+                  coverImage: singleBuyPayload.product.coverImage
+                }
+              ]
+            : cartRows.map((r) => ({
+                title: r.product_name,
+                spec: r.spec,
+                quantity: r.quantity,
+                price: r.price,
+                coverImage: r.cover_image
+              }))
+        }
+        cartParam={
+          singleBuyPayload && singleBuyPayload.itemId
+            ? `${singleBuyPayload.itemId}|${singleBuyPayload.quantity}|0`
+            : buildCartParam(cartRows)
+        }
+        onOrderCreated={handleOrderCreated}
       />
 
-      {/* 14. 安全收银台 */}
+      {/* 14. 安全收银台（微信 H5 + 余额；支持请求家人代付） */}
       <PaymentModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
-        amount={checkoutPayload?.totalAmount || 0}
-        onPaymentSuccess={handlePaymentSuccess}
+        token={authToken}
+        orderId={pendingOrder?.orderId || ''}
+        amount={pendingOrder?.amount || 0}
+        onPaid={handlePaymentSuccess}
+        onRequestFamilyPay={() => setIsFamilyPayOpen(true)}
+      />
+
+      {/* 14.1 亲情代付请求收发 */}
+      <FamilyPayModal
+        isOpen={isFamilyPayOpen}
+        onClose={() => setIsFamilyPayOpen(false)}
+        token={authToken}
+        onGoPay={(orderId, amount) => {
+          setPendingOrder({ orderId, amount });
+          setIsPaymentOpen(true);
+        }}
       />
 
       {/* 15. 多模态订单详情与履约跟踪 (实物/核销/上门派单) */}
@@ -674,11 +875,8 @@ export default function App() {
         isOpen={!!selectedOrder}
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        onConfirmReceipt={(id) => {
-          setOrders((prev) =>
-            prev.map((o) => (o.id === id ? { ...o, status: 'completed', statusText: '已完成' } : o))
-          );
-        }}
+        onConfirmReceipt={handleConfirmReceipt}
+        onCancelOrder={handleCancelOrder}
       />
 
       {/* 16. 移动端 750rpx 适配与架构解析文档 */}

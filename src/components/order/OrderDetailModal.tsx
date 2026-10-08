@@ -7,13 +7,15 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onConfirmReceipt?: (orderId: string) => void;
+  onCancelOrder?: (orderId: string) => void;
 }
 
 export const OrderDetailModal: React.FC<Props> = ({
   order,
   isOpen,
   onClose,
-  onConfirmReceipt
+  onConfirmReceipt,
+  onCancelOrder
 }) => {
   const [copied, setCopied] = useState(false);
   const [simulatedDoorstepStatus, setSimulatedDoorstepStatus] = useState<
@@ -263,6 +265,19 @@ export const OrderDetailModal: React.FC<Props> = ({
 
         {/* Footer */}
         <div className="p-3 border-t border-slate-100 bg-white flex gap-2">
+          {order.status === 'pending_pay' && onCancelOrder && (
+            <button
+              onClick={() => {
+                if (window.confirm('确认取消该待付款订单？进行中的代付请求将一并失效')) {
+                  onCancelOrder?.(order.id);
+                  onClose();
+                }
+              }}
+              className="flex-1 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs rounded-xl border border-rose-200"
+            >
+              取消订单
+            </button>
+          )}
           {isPhysical && (
             <button
               onClick={() => {

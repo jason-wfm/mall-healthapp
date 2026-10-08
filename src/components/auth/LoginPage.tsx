@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Smartphone,
+  User,
   Lock,
   Eye,
   EyeOff,
@@ -64,9 +65,9 @@ export const LoginPage: React.FC<Props> = ({
   onLoginSuccess
 }) => {
   const [loginMode, setLoginMode] = useState<'sms' | 'password' | 'wechat'>('sms');
-  const [phone, setPhone] = useState('13800000001');
+  const [phone, setPhone] = useState('13800001234');
   const [smsCode, setSmsCode] = useState('682910');
-  const [password, setPassword] = useState('123456');
+  const [password, setPassword] = useState('E2eMch@2026');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [countdown, setCountdown] = useState(0);
@@ -132,9 +133,9 @@ export const LoginPage: React.FC<Props> = ({
   const handlePresetAccount = (type: 'zhang' | 'li') => {
     setErrorMessage(null);
     if (type === 'zhang') {
-      setPhone('13800000001');
+      setPhone('13800001234');
       setSmsCode('682910');
-      setPassword('123456');
+      setPassword('E2eMch@2026');
       setSelectedWechatUser('zhang');
     } else {
       setPhone('13988882233');
@@ -155,7 +156,7 @@ export const LoginPage: React.FC<Props> = ({
       return;
     }
     if (loginMode === 'password' && (!phone || !password)) {
-      setErrorMessage('请输入手机号及密码');
+      setErrorMessage('请输入登录账号及密码');
       return;
     }
 
@@ -164,11 +165,11 @@ export const LoginPage: React.FC<Props> = ({
 
     try {
       if (loginMode === 'sms') {
-        // 短信登录接口: POST /front/account/login
+        // 短信登录接口: POST /front/account/login/doSmsLogin
+        // 字段对齐后端 RegReq: verifyKey=手机号, verifyCode=验证码
         const res = await apiLoginBySms({
-          mobile: phone,
-          auth_code: smsCode,
-          user_type: 1
+          verifyKey: phone,
+          verifyCode: smsCode
         });
 
         const userData = res.data;
@@ -182,14 +183,15 @@ export const LoginPage: React.FC<Props> = ({
           loginMethod: 'sms',
           token: userData.token,
           userId: userData.user_id,
-          apiSource: 'POST /front/account/login'
+          apiSource: 'POST /front/account/login/doSmsLogin'
         };
         onLoginSuccess(user);
       } else {
         // 账号密码登录: POST /front/account/login/login
+        // 字段对齐后端 LoginReq(camelCase): userAccount / password
         const res = await apiLoginByAccount({
-          user_account: phone,
-          user_password: password
+          userAccount: phone,
+          password: password
         });
 
         const userData = res.data;
@@ -323,89 +325,7 @@ export const LoginPage: React.FC<Props> = ({
               🩺
             </div>
             <h1 className="text-lg font-black text-slate-900">健康商城 · 登录中心</h1>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              基于开源 modulithshop-v3-java 账户认证接口规范构建
-            </p>
           </div>
-
-          {/* 开源接口规范标签栏 */}
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 text-[11px] space-y-2">
-            <div className="flex items-center justify-between font-bold text-slate-700">
-              <span className="flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-teal-700" />
-                <span>开源项目已对接接口 (SpringBoot3)</span>
-              </span>
-              <span className="text-[9px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>HTTP 200 就绪</span>
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 text-[10px] font-mono">
-              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
-                <div className="text-[9px] text-slate-400 font-sans truncate">微信登录</div>
-                <div className="text-emerald-700 font-bold truncate text-[9px]">/front/account/wechat</div>
-              </div>
-              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
-                <div className="text-[9px] text-slate-400 font-sans truncate">短信登录</div>
-                <div className="text-teal-700 font-bold truncate text-[9px]">/front/account/login</div>
-              </div>
-              <div className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 truncate min-w-0">
-                <div className="text-[9px] text-slate-400 font-sans truncate">账号登录</div>
-                <div className="text-indigo-700 font-bold truncate text-[9px]">/front/account/login/login</div>
-              </div>
-            </div>
-          </div>
-
-        {/* 演示环境：一键测试账号快捷填充 */}
-        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-            <span className="flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>快速测试身份</span>
-            </span>
-            <span className="text-[10px] text-teal-600 font-normal">支持微信/短信/密码三通</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              id="btn-preset-zhang"
-              onClick={() => handlePresetAccount('zhang')}
-              className={`p-2 rounded-xl text-left border transition-all text-xs cursor-pointer ${
-                phone === '13800000001'
-                  ? 'border-teal-600 bg-teal-50/70 text-teal-900 shadow-xs'
-                  : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-              }`}
-            >
-              <div className="font-bold text-[11px] flex items-center gap-1">
-                <span>👨‍💼 张明</span>
-                <span className="text-[8px] bg-amber-200 text-amber-950 px-1 py-0.2 rounded font-bold">
-                  VIP黄金
-                </span>
-              </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">13800000001</div>
-            </button>
-
-            <button
-              type="button"
-              id="btn-preset-li"
-              onClick={() => handlePresetAccount('li')}
-              className={`p-2 rounded-xl text-left border transition-all text-xs cursor-pointer ${
-                phone === '13988882233'
-                  ? 'border-teal-600 bg-teal-50/70 text-teal-900 shadow-xs'
-                  : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-              }`}
-            >
-              <div className="font-bold text-[11px] flex items-center gap-1">
-                <span>👵 李秀兰</span>
-                <span className="text-[8px] bg-purple-100 text-purple-800 px-1 py-0.2 rounded font-bold">
-                  慢病关怀
-                </span>
-              </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">13988882233</div>
-            </button>
-          </div>
-        </div>
-
         {/* 3 种登录方式切换卡：短信验证码 | 账号密码 | 微信登录 */}
         <div className="flex border-b border-slate-100 text-xs font-bold">
           <button
@@ -417,7 +337,7 @@ export const LoginPage: React.FC<Props> = ({
             }`}
           >
             <span>短信验证码</span>
-            <span className="block text-[9px] font-mono text-slate-400 font-normal">/account/login</span>
+            <span className="block text-[9px] font-mono text-slate-400 font-normal"></span>
             {loginMode === 'sms' && (
               <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-teal-600 rounded-full" />
             )}
@@ -431,7 +351,7 @@ export const LoginPage: React.FC<Props> = ({
             }`}
           >
             <span>账号密码</span>
-            <span className="block text-[9px] font-mono text-slate-400 font-normal">/login/login</span>
+            <span className="block text-[9px] font-mono text-slate-400 font-normal"></span>
             {loginMode === 'password' && (
               <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-teal-600 rounded-full" />
             )}
@@ -451,7 +371,7 @@ export const LoginPage: React.FC<Props> = ({
                 推荐
               </span>
             </div>
-            <span className="block text-[9px] font-mono text-slate-400 font-normal">/account/wechat</span>
+            <span className="block text-[9px] font-mono text-slate-400 font-normal"></span>
             {loginMode === 'wechat' && (
               <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#07C160] rounded-full" />
             )}
@@ -483,9 +403,6 @@ export const LoginPage: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-900">微信账号快速授权登录</h3>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  调用开源接口 <span className="font-mono text-emerald-800 font-bold">/front/account/wechat</span> 完成凭证校验
-                </p>
               </div>
 
               {/* 微信绑定账号预览 */}
@@ -518,7 +435,7 @@ export const LoginPage: React.FC<Props> = ({
               {/* 权限说明 */}
               <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 pt-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>微信官方 OAuth 2.0 鉴权 · 请求路由至 /front/account/wechat</span>
+                <span>微信官方 OAuth 2.0 鉴权</span>
               </div>
             </div>
 
@@ -530,7 +447,7 @@ export const LoginPage: React.FC<Props> = ({
               className="w-full bg-[#07C160] hover:bg-[#06ad56] active:scale-98 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <WechatIcon className="w-5 h-5" />
-              <span>发起微信授权并调用接口登录</span>
+              <span>发起微信授权</span>
               {redirectNotice && <span className="text-[11px] font-normal opacity-90">(自动返回前页)</span>}
             </button>
           </div>
@@ -539,25 +456,42 @@ export const LoginPage: React.FC<Props> = ({
         {/* 2. 短信或密码模式表单输入区 */}
         {loginMode !== 'wechat' && (
           <div className="space-y-3 pt-1">
-            {/* 手机号 */}
+            {/* 登录账号 / 手机号（短信模式为手机号输入，账号密码模式为登录账号输入） */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-500 block">
-                {loginMode === 'sms' ? '手机号码 (mobile)' : '登录账号 / 手机号 (user_account)'}
+                {loginMode === 'sms' ? '手机号码 (mobile)' : '账号登录'}
               </label>
               <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 focus-within:border-teal-600 focus-within:bg-white transition-all">
-                <span className="text-xs font-bold text-slate-600 mr-2 pr-2 border-r border-slate-200">
-                  +86
-                </span>
-                <Smartphone className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-                <input
-                  type="tel"
-                  id="input-phone"
-                  value={phone}
-                  maxLength={11}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="请输入11位手机号"
-                  className="w-full text-xs bg-transparent outline-hidden font-mono text-slate-900 placeholder:text-slate-400 font-bold"
-                />
+                {loginMode === 'sms' ? (
+                  <span className="text-xs font-bold text-slate-600 mr-2 pr-2 border-r border-slate-200">
+                    +86
+                  </span>
+                ) : null}
+                {loginMode === 'sms' ? (
+                  <Smartphone className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                ) : (
+                  <User className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+                )}
+                {loginMode === 'sms' ? (
+                  <input
+                    type="tel"
+                    id="input-phone"
+                    value={phone}
+                    maxLength={11}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="请输入11位手机号"
+                    className="w-full text-xs bg-transparent outline-hidden font-mono text-slate-900 placeholder:text-slate-400 font-bold"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    id="input-account"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="请输入登录账号或手机号"
+                    className="w-full text-xs bg-transparent outline-hidden font-mono text-slate-900 placeholder:text-slate-400 font-bold"
+                  />
+                )}
               </div>
             </div>
 
@@ -565,7 +499,7 @@ export const LoginPage: React.FC<Props> = ({
             {loginMode === 'sms' && (
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 block">
-                  短信验证码 (auth_code) · 接口: /front/account/login
+                  短信验证码
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 focus-within:border-teal-600 focus-within:bg-white transition-all">
@@ -601,7 +535,6 @@ export const LoginPage: React.FC<Props> = ({
             {loginMode === 'password' && (
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 block">
-                  登录密码 (user_password) · 接口: /front/account/login/login
                 </label>
                 <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 focus-within:border-teal-600 focus-within:bg-white transition-all">
                   <Lock className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
@@ -662,143 +595,23 @@ export const LoginPage: React.FC<Props> = ({
               ) : (
                 <>
                   <span>
-                    {loginMode === 'sms' ? '调用短信接口登录并进入' : '调用账号密码接口登录并进入'}
+                    {loginMode === 'sms' ? '短信登录' : '账号密码登录'}
                   </span>
                   {redirectNotice && <span className="text-[11px] font-normal opacity-90">(自动返回前页)</span>}
                 </>
               )}
             </button>
-
-            {/* 分隔线与第三方微信快捷登录入口 */}
-            <div className="relative my-4 text-center">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-100" />
-              </div>
-              <span className="relative bg-white px-3 text-[10px] text-slate-400 font-medium">
-                或使用微信极速验证登录 (/front/account/wechat)
-              </span>
-            </div>
-
-            {/* 底部微信授权登录按钮 */}
-            <button
-              type="button"
-              id="btn-wechat-bottom-quick"
-              onClick={handleStartWechatLogin}
-              className="w-full bg-[#07C160]/10 hover:bg-[#07C160]/20 border border-[#07C160]/30 text-[#07C160] font-bold text-xs py-2.5 rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
-            >
-              <WechatIcon className="w-4 h-4" />
-              <span>微信快捷授权并验证登录</span>
-            </button>
           </div>
         )}
 
         {/* 4. 开源项目接口实时调用监视器 (API Inspector) */}
-        <div className="mt-4 border border-slate-200 rounded-2xl overflow-hidden bg-slate-900 text-slate-100">
-          <button
-            type="button"
-            onClick={() => setShowApiInspector(!showApiInspector)}
-            className="w-full p-3 flex items-center justify-between hover:bg-slate-800 transition-colors text-left cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-400" />
-              <div>
-                <span className="text-xs font-bold text-white block">
-                  开源接口请求监视器 (Modulithshop v3 Java)
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  {apiLogsList.length > 0
-                    ? `已产生 ${apiLogsList.length} 条真实网络请求记录`
-                    : '已就绪，等待调用登录接口'}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-2 py-0.5 rounded-full border border-emerald-500/30">
-                POST Ready
-              </span>
-              {showApiInspector ? (
-                <ChevronUp className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              )}
-            </div>
-          </button>
 
-          {showApiInspector && (
-            <div className="p-3 border-t border-slate-800 space-y-3 text-[11px]">
-              <div className="flex items-center justify-between text-[10px] text-slate-400">
-                <span>仓库: github.com/shsuishang/modulithshop-v3-java</span>
-                <a
-                  href="https://github.com/shsuishang/modulithshop-v3-java"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-teal-400 flex items-center gap-1 hover:underline"
-                >
-                  <span>查看源码</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-
-              {/* 历史请求列表 */}
-              {apiLogsList.length === 0 ? (
-                <div className="text-slate-500 text-center py-3 font-mono">
-                  暂无请求记录，请点击上方发送验证码或登录按钮进行调用测试
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-1 overflow-x-auto pb-1">
-                    {apiLogsList.map((log) => (
-                      <button
-                        key={log.id}
-                        type="button"
-                        onClick={() => setActiveLogDetail(log)}
-                        className={`text-[10px] font-mono px-2.5 py-1 rounded-lg shrink-0 border transition-all cursor-pointer ${
-                          activeLogDetail?.id === log.id
-                            ? 'bg-emerald-600 text-white border-emerald-400 font-bold'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-                        }`}
-                      >
-                        {log.endpoint.replace('/front/account', '..')}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* 选中请求的报文结构明细 */}
-                  {activeLogDetail && (
-                    <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1.5 font-mono text-[10px]">
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-emerald-400 font-bold">
-                          {activeLogDetail.method} {activeLogDetail.endpoint}
-                        </span>
-                        <span>
-                          {activeLogDetail.durationMs}ms · HTTP {activeLogDetail.responseStatus}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block">请求参数 Request:</span>
-                        <pre className="text-amber-200 overflow-x-auto p-1.5 bg-black/40 rounded">
-                          {JSON.stringify(activeLogDetail.requestPayload, null, 2)}
-                        </pre>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block">响应结果 Response (DTO):</span>
-                        <pre className="text-emerald-300 overflow-x-auto p-1.5 bg-black/40 rounded max-h-36">
-                          {JSON.stringify(activeLogDetail.responseBody, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
         {/* 底部安全保障标识 */}
-        <div className="pt-2 pb-2 text-center text-[10px] text-slate-400 flex items-center justify-center gap-1">
+        {/* <div className="pt-2 pb-2 text-center text-[10px] text-slate-400 flex items-center justify-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
           <span>modulithshop-v3-java 接口适配 · 国家等保三级医疗健康安全传输</span>
-        </div>
+        </div> */}
       </div>
 
       {/* 3. 微信官方授权与安全鉴权验证模态抽屉 (WeChat OAuth Simulation) */}
@@ -811,7 +624,6 @@ export const LoginPage: React.FC<Props> = ({
                 <WechatIcon className="w-5 h-5" />
                 <span className="font-bold text-xs">微信授权登录</span>
               </div>
-              <span className="text-[10px] font-mono opacity-90">POST /front/account/wechat</span>
             </div>
 
             {/* 授权内容 */}
@@ -822,10 +634,7 @@ export const LoginPage: React.FC<Props> = ({
                   🩺
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900">健康商城 C端系统 申请使用</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    基于 modulithshop-v3-java 提供账户鉴权服务
-                  </p>
+                  <h4 className="text-xs font-black text-slate-900">健康商城移动端系统 申请使用</h4>
                 </div>
               </div>
 

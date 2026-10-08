@@ -63,7 +63,7 @@ export const HomeView: React.FC<Props> = ({ onSelectProduct, onNavigateTab }) =>
           <div className="relative z-10 space-y-1">
             <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-semibold">
               <Sparkles className="w-3 h-3 text-amber-200" />
-              <span>ShopSuite 社交电商裂变节</span>
+              <span>HealthShop 社交电商裂变节</span>
             </div>
             <h2 className="text-lg font-black tracking-tight leading-tight">
               拼着买更便宜 · 砍到底价0元拿

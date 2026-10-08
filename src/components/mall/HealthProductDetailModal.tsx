@@ -5,8 +5,8 @@ import { X, ShieldCheck, MapPin, Clock, Calendar, Car, ShoppingCart, ArrowRight,
 interface Props {
   product: HealthProduct | null;
   onClose: () => void;
-  onAddToCart: (product: HealthProduct, sku: string, qty: number, price: number) => void;
-  onInstantBuy: (product: HealthProduct, sku: string, qty: number, price: number) => void;
+  onAddToCart: (product: HealthProduct, sku: string, qty: number, price: number, itemId?: number) => void;
+  onInstantBuy: (product: HealthProduct, sku: string, qty: number, price: number, itemId?: number) => void;
   onOpenStoreDetail: () => void;
 }
 
@@ -17,7 +17,11 @@ export const HealthProductDetailModal: React.FC<Props> = ({
   onInstantBuy,
   onOpenStoreDetail
 }) => {
-  const [selectedSku, setSelectedSku] = useState('标准医用版');
+  // [healthmall-ext] 二期：SKU 取商品真实 items[]，缺省回退占位规格
+  const skuOptions = product?.items?.length
+    ? product.items.map((it) => ({ name: it.itemName || `规格${it.itemId}`, itemId: it.itemId, price: it.price }))
+    : [{ name: '标准版', itemId: undefined as number | undefined, price: product?.price ?? 0 }];
+  const [selectedSku, setSelectedSku] = useState(skuOptions[0]?.name || '标准版');
   const [quantity, setQuantity] = useState(1);
   const [selectedStore, setSelectedStore] = useState('康养堂（南山科技园旗舰店）');
   const [selectedSlot, setSelectedSlot] = useState('10:00 - 11:00');
@@ -25,17 +29,22 @@ export const HealthProductDetailModal: React.FC<Props> = ({
 
   if (!product) return null;
 
+  const currentItem =
+    skuOptions.find((s) => s.name === selectedSku) ||
+    skuOptions.find((s) => s.itemId === product.items?.find((i) => i.isDefault)?.itemId) ||
+    skuOptions[0];
+  const activePrice = currentItem?.itemId ? currentItem.price : product.price;
+
   const isDoorstep = product.type === 'doorstepService';
   const isInStore = product.type === 'inStoreService';
   const isPhysical = product.type === 'product';
 
   const handleAddCart = () => {
-    onAddToCart(product, selectedSku, quantity, product.price);
-    alert('已加入购物车 (家庭共享购物车生效)');
+    onAddToCart(product, currentItem?.name || selectedSku, quantity, activePrice, currentItem?.itemId);
   };
 
   const handleBuy = () => {
-    onInstantBuy(product, selectedSku, quantity, product.price);
+    onInstantBuy(product, currentItem?.name || selectedSku, quantity, activePrice, currentItem?.itemId);
   };
 
   return (
@@ -240,18 +249,19 @@ export const HealthProductDetailModal: React.FC<Props> = ({
             {/* SKU 规格选择 */}
             <div className="space-y-1.5 text-xs">
               <label className="font-bold text-slate-800">服务/商品规格</label>
-              <div className="flex gap-2">
-                {['标准医用版', '尊享全家礼盒版'].map((sku) => (
+              <div className="flex flex-wrap gap-2">
+                {skuOptions.map((sku) => (
                   <button
-                    key={sku}
-                    onClick={() => setSelectedSku(sku)}
+                    key={sku.itemId ?? sku.name}
+                    onClick={() => setSelectedSku(sku.name)}
                     className={`px-3 py-1.5 rounded-xl border ${
-                      selectedSku === sku
+                      selectedSku === sku.name
                         ? 'border-teal-600 bg-teal-50 text-teal-800 font-bold'
                         : 'border-slate-200 text-slate-600'
                     }`}
                   >
-                    {sku}
+                    {sku.name}
+                    {sku.price > 0 && sku.price !== product.price ? ` ¥${sku.price}` : ''}
                   </button>
                 ))}
               </div>

@@ -45,7 +45,7 @@ export const SharePosterModal: React.FC<Props> = ({ title, desc, image, onClose 
                 <div className="w-5 h-5 rounded-md bg-white text-rose-600 font-black text-xs flex items-center justify-center">
                   S
                 </div>
-                <span className="font-bold text-xs">ShopSuite 社交电商优选</span>
+                <span className="font-bold text-xs">HealthShop 社交电商优选</span>
               </div>
               <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-mono">
                 官方严选正品

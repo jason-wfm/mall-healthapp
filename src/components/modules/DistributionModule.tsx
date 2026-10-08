@@ -72,7 +72,7 @@ export const DistributionModule: React.FC<Props> = ({ onOpenSharePoster, onSelec
             id="btn-gen-invite-poster"
             onClick={() =>
               onOpenSharePoster(
-                '加入ShopSuite合伙人，月入过万不是梦！',
+                '加入HealthShop合伙人，月入过万不是梦！',
                 `我的专属邀请码：${profile.inviteCode}，注册即享新人百元券包`,
                 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80'
               )

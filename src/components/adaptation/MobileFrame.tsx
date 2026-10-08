@@ -17,7 +17,7 @@ export const MobileFrame: React.FC<Props> = ({
   isLandscape,
   showBezel,
   children,
-  navTitle = 'ShopSuite 社交电商',
+  navTitle = 'HealthShop 社交电商',
   onBack,
   showBack = false
 }) => {
@@ -117,7 +117,7 @@ export const MobileFrame: React.FC<Props> = ({
               <div className="absolute left-1/2 -translate-x-1/2 top-1.5 h-[22px] w-[95px] bg-black rounded-full flex items-center justify-between px-2.5 shadow-sm transition-all hover:w-[130px] group cursor-pointer">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
                 <span className="text-[9px] font-mono text-white/80 group-hover:block hidden">
-                  ShopSuite
+                  HealthShop
                 </span>
                 <div className="w-2 h-2 rounded-full bg-slate-900 border border-slate-700" />
               </div>
@@ -155,7 +155,7 @@ export const MobileFrame: React.FC<Props> = ({
                   <div className="w-4 h-4 rounded bg-rose-500 text-white flex items-center justify-center text-[10px]">
                     S
                   </div>
-                  <span>ShopSuite</span>
+                  <span>HealthShop</span>
                 </div>
               )}
             </div>

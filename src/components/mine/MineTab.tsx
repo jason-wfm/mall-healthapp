@@ -1,6 +1,6 @@
 import React from 'react';
 import { HealthProfile, HealthOrder } from '../../types/health';
-import { ChevronRight, CreditCard, Clock, Truck, ShieldCheck, Settings, Users, FileText, Activity, Gift, Smartphone, HelpCircle, LogOut, LogIn, User } from 'lucide-react';
+import { ChevronRight, CreditCard, Clock, Truck, ShieldCheck, Settings, Users, FileText, Activity, Gift, Smartphone, HelpCircle, LogOut, LogIn, User, Store, RefreshCw, Wallet, HandCoins } from 'lucide-react';
 
 interface Props {
   profile: HealthProfile;
@@ -10,9 +10,13 @@ interface Props {
   onLogout?: () => void;
   onOpenOrder: (order: HealthOrder) => void;
   onOpenFamilyCircle: () => void;
+  onOpenFamilyPay?: () => void;
   onOpenConstitution: () => void;
   onOpenMedicalReport: () => void;
   onOpenHealthHub: () => void;
+  onOpenMerchantApply?: () => void;
+  onOpenApplyProgress?: () => void;
+  onOpenMerchantFinance?: () => void;
 }
 
 export const MineTab: React.FC<Props> = ({
@@ -23,9 +27,13 @@ export const MineTab: React.FC<Props> = ({
   onLogout,
   onOpenOrder,
   onOpenFamilyCircle,
+  onOpenFamilyPay,
   onOpenConstitution,
   onOpenMedicalReport,
-  onOpenHealthHub
+  onOpenHealthHub,
+  onOpenMerchantApply,
+  onOpenApplyProgress,
+  onOpenMerchantFinance
 }) => {
   return (
     <div className="pb-24 space-y-3 bg-slate-50/70 min-h-full text-slate-800">
@@ -226,6 +234,19 @@ export const MineTab: React.FC<Props> = ({
             <ChevronRight className="w-4 h-4 text-slate-300" />
           </div>
 
+          {onOpenFamilyPay && (
+            <div
+              onClick={onOpenFamilyPay}
+              className="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+            >
+              <div className="flex items-center gap-2.5">
+                <HandCoins className="w-4 h-4 text-purple-600" />
+                <span className="font-bold">亲情代付 (OD-017 收到的/发出的请求)</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+          )}
+
           <div
             onClick={onOpenConstitution}
             className="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
@@ -266,6 +287,45 @@ export const MineTab: React.FC<Props> = ({
             <div className="flex items-center gap-2.5">
               <ShieldCheck className="w-4 h-4 text-slate-500" />
               <span className="font-bold">数据隐私合规与授权管理 (HR-007)</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300" />
+          </div>
+        </div>
+      </div>
+
+      {/* [healthmall-ext] 多商家 P2：商家中心入口（RJ-005 / RJ-007 / BW-017~022） */}
+      <div className="px-3">
+        <div className="bg-white rounded-2xl border border-teal-100 shadow-xs divide-y divide-slate-100 text-xs">
+          <div className="px-3.5 pt-3 pb-1 text-[10px] font-black text-teal-700 tracking-wider">商家中心</div>
+          <div
+            onClick={onOpenMerchantApply}
+            className="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+          >
+            <div className="flex items-center gap-2.5">
+              <Store className="w-4 h-4 text-teal-600" />
+              <span className="font-bold">商家入驻（提交申请 / 资质材料）</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300" />
+          </div>
+
+          <div
+            onClick={onOpenApplyProgress}
+            className="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+          >
+            <div className="flex items-center gap-2.5">
+              <RefreshCw className="w-4 h-4 text-amber-600" />
+              <span className="font-bold">入驻进度与驳回重提</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300" />
+          </div>
+
+          <div
+            onClick={onOpenMerchantFinance}
+            className="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+          >
+            <div className="flex items-center gap-2.5">
+              <Wallet className="w-4 h-4 text-indigo-600" />
+              <span className="font-bold">商家资金中心（结算/分账/确认）</span>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-300" />
           </div>

@@ -2,7 +2,8 @@ export type HealthTab = 'home' | 'services' | 'mall' | 'discover' | 'mine' | 'he
 export type HealthTabType = HealthTab;
 
 // 区域门户实例
-export type PortalCity = '深圳门户' | '北京门户' | '上海门户' | '广州门户' | 'sz' | 'bj' | 'sh' | 'gz';
+/** [healthmall-ext] 放宽为 string：真实门户名由门户列表接口下发 */
+export type PortalCity = string;
 
 // 购物车通用项
 export interface CartItem {
@@ -145,6 +146,13 @@ export interface HealthProduct {
   isSeckill?: boolean;
   seckillTime?: string;
   healthTags: string[];
+  // [healthmall-ext] 二期：SKU 列表（/front/pt/product/** items 映射，加购需 item_id）
+  items?: Array<{
+    itemId: number;
+    itemName?: string;
+    isDefault?: boolean;
+    price: number;
+  }>;
   store: {
     id: string;
     name: string;

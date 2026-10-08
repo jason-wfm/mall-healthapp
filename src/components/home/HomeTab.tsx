@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HealthProfile, HealthArticle, PortalCity, HealthProduct } from '../../types/health';
 import { MOCK_HEALTH_ARTICLES } from '../../data/healthMockData';
+import { apiGetArticles } from '../../services/cmsApi';
 import { Search, ChevronRight, Handshake, Sparkles, BookOpen, Activity, Users, ShieldCheck, FileText, MapPin, Building2 } from 'lucide-react';
 
 interface Props {
@@ -46,6 +47,25 @@ export const HomeTab: React.FC<Props> = ({
   onSelectProduct,
   onSwitchTab
 }) => {
+  // [healthmall-ext] 期1：资讯精选接真实 API（cms articleBase），失败保持 mock 不空屏
+  const [articles, setArticles] = useState<HealthArticle[]>(MOCK_HEALTH_ARTICLES);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiGetArticles({ page: 1, size: 10 })
+      .then((res) => {
+        const picked =
+          res.popular.length >= 5
+            ? res.popular.slice(0, 5)
+            : [...res.popular, ...res.articles.filter((a) => a.readCount !== '热门')].slice(0, 5);
+        if (!cancelled && picked.length > 0) setArticles(picked);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // 首页广告轮播
   const banners = [
     {
@@ -248,7 +268,7 @@ export const HomeTab: React.FC<Props> = ({
               <h3 className="font-bold text-slate-800 text-xs">健康资讯精选</h3>
             </div>
             <span
-              onClick={() => (onNavigateTab ? onNavigateTab('mall') : onSwitchTab?.('mall'))}
+              onClick={() => (onNavigateTab ? onNavigateTab('discover') : onSwitchTab?.('discover'))}
               className="text-[10px] text-teal-600 cursor-pointer flex items-center font-medium"
             >
               全部资讯
@@ -257,7 +277,7 @@ export const HomeTab: React.FC<Props> = ({
           </div>
 
           <div className="divide-y divide-slate-100">
-            {MOCK_HEALTH_ARTICLES.map((article) => (
+            {articles.map((article) => (
               <div
                 key={article.id}
                 onClick={() => onOpenArticle?.(article)}
@@ -273,7 +293,7 @@ export const HomeTab: React.FC<Props> = ({
                   <div className="flex items-center gap-2 text-[9px] text-slate-400 mt-1">
                     <span>{article.category}</span>
                     <span>·</span>
-                    <span>{article.readCount} 阅读</span>
+                    {article.readCount && <span className="text-rose-500 font-bold">{article.readCount}</span>}
                     {article.recommendForConstitution && (
                       <span className="bg-amber-100 text-amber-700 font-bold px-1.5 py-0.2 rounded-md">
                         按您的体质推荐
@@ -286,7 +306,7 @@ export const HomeTab: React.FC<Props> = ({
           </div>
 
           <div
-            onClick={() => (onNavigateTab ? onNavigateTab('mall') : onSwitchTab?.('mall'))}
+            onClick={() => (onNavigateTab ? onNavigateTab('discover') : onSwitchTab?.('discover'))}
             className="p-2.5 text-center text-[10px] text-teal-600 font-bold border-t border-slate-100 bg-slate-50/50 cursor-pointer"
           >
             查看更多健康与慢病科普 ›

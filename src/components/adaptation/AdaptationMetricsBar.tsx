@@ -55,7 +55,7 @@ export const AdaptationMetricsBar: React.FC<Props> = ({
             <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center shrink-0">
               <Sparkles className="w-3 h-3 text-white" />
             </div>
-            <span className="font-bold text-white text-xs truncate">ShopSuite</span>
+            <span className="font-bold text-white text-xs truncate">HealthShop</span>
             <span className="text-[9px] px-1 py-0.2 rounded font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>750rpx 视口全屏自适应</span>
@@ -142,7 +142,7 @@ export const AdaptationMetricsBar: React.FC<Props> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-sm tracking-tight">ShopSuite Mobile</span>
+              <span className="font-bold text-white text-sm tracking-tight">HealthShop Mobile</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">
                 750rpx 适配方案
               </span>
